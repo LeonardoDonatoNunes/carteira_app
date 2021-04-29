@@ -8,6 +8,8 @@
 # Carregar pacotes ----
 library(shiny)
 library(shinydashboard)
+library(dplyr)
+library(shinycssloaders)
 
 source("./ler_notas.R")
 
@@ -19,8 +21,8 @@ ui <- dashboardPage(
     dashboardSidebar(
         
         HTML(paste0(
-            "<p style = 'text-align: center; font-size: 28px; '<a target='_blank'>Carteira de</a> </p>",
-            "<p style = 'text-align: center; color: #33b812; font-size: 30px; '<a target='_blank'>Investimento$</a> </p>",
+            "<p style = 'text-align: center; font-size: 28px; '<a target='_blank'>Monitor de Carteira</a> </p>",
+            "<p style = 'text-align: center; color: #33b812; font-size: 32px; '<a target='_blank'>Investimento$</a> </p>",
             "<br>",
             "<br>"
         )),
@@ -73,27 +75,53 @@ ui <- dashboardPage(
             # First tab content
             tabItem(tabName = "notas",
                     
-                    box(width = 12,
-                    HTML(paste0(
-                        "<p style = 'text-align: justify; color: #1d1f1d; font-size: 22px; '<a target='_blank'>Ler notas de corretagem</a> </p>",
-                        "<p style = 'text-align: justify; color: #1d1f1d; font-size: 20px; '<a target='_blank'>As funções abaixo servem para obeter os dados de negociações que estão nas notas de corretagem.</a> </p>",
-                        "<br>",
-                        "<br>"
-                    )),
+                    fluidRow(
+                        box(width = 12,
+                            HTML(paste0(
+                                "<p style = 'text-align: justify; color: #1d1f1d; font-size: 22px; '<a target='_blank'>Ler notas de corretagem</a> </p>",
+                                "<p style = 'text-align: justify; color: #1d1f1d; font-size: 20px; '<a target='_blank'>As funções abaixo servem para obeter os dados de negociações que estão nas notas de corretagem.</a> </p>",
+                                "<br>",
+                                "<br>"
+                            )),
+                        ) 
                     ),
                     
-                    box(width = 3, title = "Selecione o diretório dos arquivos .TXT", footer = "Somente execute se os nomes dos arquivos aparecerem no quadro acima",
-                        textInput("diretorio_limpeza_input", label = "Copie e cole o caminho do diretorio", value = "C:/ArquivosTXT"),
-                        textOutput("diretorio_limpeza_output")
-                    ),
-                    
-                    box(width = 3,
-                        selectInput("tipo_telemetria", label = "Selecione o tipo da telemetria", choices = c("Rádio Fixo", "Rádio Móvel", "Acústica"), selected = "Rádio Fixo"),
-                        actionButton("limpar_dados", "Limpar dados", icon = icon("arrow-circle-down"))
+                    fluidRow(
+                        
+                        box(width = 12,
+                        
+                        column(width = 3,
+                            fluidRow(
+                                box(width = 12,
+                                    title = "Selecione o diretório dos arquivos .TXT", footer = "Somente execute se os nomes dos arquivos aparecerem no quadro acima",
+                                    textInput("diretorio_notas_input", label = "Copie e cole o caminho do diretorio", value = "C:/Arquivos/Financeiro/Notas"),
+                                    textOutput("diretorio_notas_output")
+                                )
+                            ),
+                            
+                            
+                            fluidRow(
+                                box(width = 12,
+                                    selectInput("corretora", label = "Selecione a Corretora", choices = c("Easynvest"), selected = "Easynvest"),
+                                    actionButton("ler_notas", "Ler notas", icon = icon("arrow-circle-down"))
+                                ) 
+                            ),
+                            
+                            fluidRow(
+                                box(width = 12,
+                                    downloadButton("download_dados", "Baixar Dados")
+                                ) 
+                            )
+                        ),
+                        
+                        column(width = 9,
+                            box(width = 12,
+                                
+                                withSpinner(tableOutput('table') ,color="#0dc5c1")
+                            )
+                        )
                     )
-                    
-                    
-            ),
+            )),
             
             
             # Second tab content
@@ -112,6 +140,47 @@ ui <- dashboardPage(
     )
 )
 
-server <- function(input, output) { }
+server <- function(input, output, session) {
+    
+    
+    
+    # close the R session when Chrome closes
+    # session$onSessionEnded(function() {
+    #   stopApp()
+    #   q("no")
+    # })
+    
+    v<-reactiveValues(data=NULL)
+    
+    diretorio_notas <- reactive({
+        input$diretorio_notas_input
+    })
+    
+    output$diretorio_notas_output <- renderText({ 
+        head(list.files(diretorio_notas()))
+    })
+    
+    observeEvent(input$ler_notas, {
+      Sys.sleep(1)
+      horario <- Sys.time()    
+      v$data <- ler_notas(diretorio = paste0(diretorio_notas(), "/"))
+      Sys.sleep(1)
+      tempo <- difftime(Sys.time(), horario)
+      Sys.sleep(tempo)
+    })
+    
+    output$table <- renderTable({
+        v$data
+    })
+
+    output$download_dados <- downloadHandler(
+       filename = function() {
+         paste('data-', Sys.Date(), '.csv', sep='')
+       },
+       content = function(con) {
+         write.csv(v$data, con)
+       }
+     )
+}
 
 shinyApp(ui, server)
