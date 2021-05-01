@@ -30,13 +30,14 @@ ui <- dashboardPage(
         
         sidebarMenu(
             
+            menuItem("Home", tabName = "home", icon = icon("home")),
             menuItem("Painel", tabName = "painel", icon = icon("tachometer-alt")),
             menuItem("Notas", tabName = "notas", icon = icon("file-pdf")),
             menuItem("Extratos", tabName = "extratos", icon = icon("table")),
             
 
             HTML(paste0(
-                "<br><br><br><br><br><br><br><br><br><br><br><br><br>",
+                "<br><br><br><br><br><br><br>",
                 "<table style='margin-left:auto; margin-right:auto;'>",
                 "<tr>",
                 "<td style='padding: 5px;'><a href='https://github.com/LeonardoDonatoNunes' target='_blank'><i class='fab fa-github-square fa-lg'></i></a></td>",
@@ -70,7 +71,26 @@ ui <- dashboardPage(
         ),
         
         tabItems(
-            
+          
+            # First tab content
+            tabItem(tabName = "home",
+                    
+                    box(width = 12,
+                        
+                        HTML(paste0(
+                          "<br><br><br><br><br><br><br><br><br><br>",
+                          "<p style = 'text-align: center; font-size: 38px;'<a target='_blank'>  <i class='fas fa-wallet'></i>  Monitor de Carteira <i class='fas fa-wallet'></i> </a>  </p>",
+                          "<p style = 'text-align: center; color: #33b812; font-size: 38px; '<a target='_blank'> <i class='fas fa-coins'></i> Investimento$ <i class='far fa-money-bill-alt'> </i> </a> </p>",
+                          "<br>",
+                          "<p style = 'text-align: center; color: #33b812; font-size: 52px; '<a target='_blank'> <i class='fas fa-hand-holding-usd'></i> </a> </p>",
+                          "<br><br><br><br><br><br><br><br><br><br><br><br><br>"
+                        ))
+                        
+                        
+                    )
+                    
+                    ),
+              
             
             # First tab content
             tabItem(tabName = "notas",
@@ -93,7 +113,6 @@ ui <- dashboardPage(
                         column(width = 3,
                             fluidRow(
                                 box(width = 12,
-                                    title = "Selecione o diretório dos arquivos .TXT", footer = "Somente execute se os nomes dos arquivos aparecerem no quadro acima",
                                     textInput("diretorio_notas_input", label = "Copie e cole o caminho do diretorio", value = "C:/Arquivos/Financeiro/Notas"),
                                     textOutput("diretorio_notas_output")
                                 )
@@ -145,10 +164,10 @@ server <- function(input, output, session) {
     
     
     # close the R session when Chrome closes
-     session$onSessionEnded(function() {
-       stopApp()
-       q("no")
-     })
+     # session$onSessionEnded(function() {
+     #   stopApp()
+     #   q("no")
+     # })
     
     v<-reactiveValues(data=NULL)
     
