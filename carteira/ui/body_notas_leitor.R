@@ -1,6 +1,8 @@
 # First tab content
-tabItem(tabName = "ler_notas",
+
+tabItem(tabName = "leitor_notas",
         
+                
         fluidRow(
           
           box(width = 12,
@@ -51,9 +53,9 @@ tabItem(tabName = "ler_notas",
                      
                      fluidRow(
                        box(width = 12,
-                           actionButton("download_dados", "Consolidar Dados"),
-                           conditionalPanel(condition = "input.download_dados", 
-                                            withSpinner(textOutput("download_concluido"), 
+                           actionButton("atualizar_dados", "Atualizar Dados", icon = icon("sync-alt")),
+                           conditionalPanel(condition = "input.atualizar_dados", 
+                                            withSpinner(textOutput("dados_atualizados"), 
                                                         proxy.height = '60px',color="#0c1b3e", 
                                                         type = 1, size = 0.8))
                        ) 
