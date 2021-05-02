@@ -1,7 +1,6 @@
 ### Leitor de notas da Easnvest ####
-
 # Função para ler cada nota
-ler_notas <- function(diretorio){
+ler_notas <- function(lista){
   
   # Carrega os pacotes
   
@@ -10,7 +9,7 @@ ler_notas <- function(diretorio){
   library(stringr)
   
   # Arquivos no diretorio
-  arquivos <- list.files(diretorio)
+  arquivos <- lista
   
   
   # Para identificar as áreas das tabelas no PDF usar a função abaixo.
@@ -24,7 +23,7 @@ ler_notas <- function(diretorio){
 
   for(i in 1:length(arquivos)){
     
-    nota <- paste0(diretorio, "/", arquivos[i])
+    nota <- arquivos[i]
   
     # Seleciona a tabela com o cabeçalho dos dados
     tabela_1 <- extract_tables(
@@ -51,11 +50,32 @@ ler_notas <- function(diretorio){
     names(tabela_2) <- nomes
     
     negocios_nota <- tabela_2
-    negocios_nota <- negocios_nota[negocios_nota$Mercado == 'BOVESPA',]
     
+    limite <- which(grepl("Resumo", negocios_nota[,1]))
+    
+    negocios_nota <- negocios_nota[1:limite-1,]
+    
+    if(any(!negocios_nota$Mercado == 'BOVESPA')){
+      indice <- which(negocios_nota$Mercado == 'BOVESPA')
+      
+      for(numero in 1:length(indice)){
+        negocios_nota[indice[numero], ]$Titulo <- paste(negocios_nota[indice[numero], ]$Titulo,
+                                                        negocios_nota[indice[numero] - 1, ]$Titulo,
+                                                        negocios_nota[indice[numero] + 1, ]$Titulo, sep = "&&")  
+      }
+      
+    }
+    
+    negocios_nota <- negocios_nota[negocios_nota$Mercado == 'BOVESPA',]
+    negocios_nota$Titulo <- str_trim(negocios_nota$Titulo)
+    negocios_nota$Titulo <- str_remove(unlist(lapply(str_split(negocios_nota$Titulo, pattern = " "), 
+                                                     function(x) x[1])), pattern = "&*")
+    
+
     data <- str_extract(as.character(tabela_1),pattern = "[0-9]{2}\\/[0-9]{2}\\/[0-9]{4}") 
     data <- data[!is.na(data)]
     negocios_nota$data <- as.Date(data, format = "%d/%m/%Y")
+    negocios_nota$nome_nota <- str_extract(arquivos[i], "[^/]+$")
     
     negociacoes <- rbind(negociacoes, negocios_nota)
   }    

@@ -13,3 +13,33 @@ body {
 .box-body {
     background-color: #d7f5d2;
 }
+
+#diretorio_notas_output {
+   width: 100%;
+   height: 300px;
+   overflow: scroll;
+   color: #6b6b6b;
+   font-size: 16px;
+}
+
+
+.btn-default {
+    font-size: 16px;
+    background-color: #0c1b3e;
+    color: #b7cab7;
+    border-color: #629df7;
+}
+
+#limpar_dados{background-color:red}
+
+table {
+    font-size: 12px;
+}
+
+
+
+
+
+
+
+

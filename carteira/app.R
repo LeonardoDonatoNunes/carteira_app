@@ -10,6 +10,7 @@ library(shiny)
 library(shinydashboard)
 library(dplyr)
 library(shinycssloaders)
+library(DT)
 
 source("./ler_notas.R")
 
@@ -32,7 +33,7 @@ ui <- dashboardPage(
             
             menuItem("Home", tabName = "home", icon = icon("home")),
             menuItem("Painel", tabName = "painel", icon = icon("tachometer-alt")),
-            menuItem("Notas", tabName = "notas", icon = icon("file-pdf")),
+            menuItem("Leitor de Notas", tabName = "ler_notas", icon = icon("file-pdf")),
             menuItem("Extratos", tabName = "extratos", icon = icon("table")),
             
 
@@ -91,56 +92,8 @@ ui <- dashboardPage(
                     
                     ),
               
-            
-            # First tab content
-            tabItem(tabName = "notas",
-                    
-                    fluidRow(
-                        box(width = 12,
-                            HTML(paste0(
-                                "<p style = 'text-align: justify; color: #1d1f1d; font-size: 22px; '<a target='_blank'>Ler notas de corretagem</a> </p>",
-                                "<p style = 'text-align: justify; color: #1d1f1d; font-size: 20px; '<a target='_blank'>As funções abaixo servem para obeter os dados de negociações que estão nas notas de corretagem.</a> </p>",
-                                "<br>",
-                                "<br>"
-                            )),
-                        ) 
-                    ),
-                    
-                    fluidRow(
-                        
-                        box(width = 12,
-                        
-                        column(width = 3,
-                            fluidRow(
-                                box(width = 12,
-                                    textInput("diretorio_notas_input", label = "Copie e cole o caminho do diretorio", value = "C:/Arquivos/Financeiro/Notas"),
-                                    textOutput("diretorio_notas_output")
-                                )
-                            ),
-                            
-                            
-                            fluidRow(
-                                box(width = 12,
-                                    selectInput("corretora", label = "Selecione a Corretora", choices = c("Easynvest"), selected = "Easynvest"),
-                                    actionButton("ler_notas", "Ler notas", icon = icon("arrow-circle-down"))
-                                ) 
-                            ),
-                            
-                            fluidRow(
-                                box(width = 12,
-                                    downloadButton("download_dados", "Baixar Dados")
-                                ) 
-                            )
-                        ),
-                        
-                        column(width = 9,
-                            box(width = 12,
-                                
-                                withSpinner(tableOutput('table') ,color="#0dc5c1")
-                            )
-                        )
-                    )
-            )),
+            # Adiciona o código da UI da página de leitura de notas.
+            source("./body/body_notas.R")$value,
             
             
             # Second tab content
@@ -173,33 +126,77 @@ server <- function(input, output, session) {
     
     diretorio_notas <- reactive({
         input$diretorio_notas_input
+      
     })
     
-    output$diretorio_notas_output <- renderText({ 
-        head(list.files(diretorio_notas()))
+    
+    output$numero_notas_output <- renderText({ 
+      paste0("A pasta contém ", length(list.files(diretorio_notas())), " nota(s) direfente(s).")
     })
+    
+    
+    output$diretorio_notas_output <- renderText({
+      dir_dados <- './dados/'
+      arquivo <- list.files(dir_dados)
+      dados <- read.csv(paste0(dir_dados, arquivo))
+      notas_arquivadas <- dados$nome_nota
+      notas_novas <- list.files(diretorio_notas())
+      
+      arquivos <- notas_novas[!(notas_novas %in% notas_arquivadas)] 
+      
+      paste0(arquivos, collapse = "\n")
+    })
+    
     
     observeEvent(input$ler_notas, {
-      Sys.sleep(1)
-      horario <- Sys.time()    
-      v$data <- ler_notas(diretorio = paste0(diretorio_notas(), "/"))
-      Sys.sleep(1)
-      tempo <- difftime(Sys.time(), horario)
-      Sys.sleep(tempo)
+      dir_dados <- './dados/'
+      arquivo <- list.files(dir_dados)
+      dados <- read.csv(paste0(dir_dados, arquivo))
+      notas_arquivadas <- dados$nome_nota
+      notas_novas <- list.files(diretorio_notas())
+      
+      arquivos <- notas_novas[!(notas_novas %in% notas_arquivadas)] 
+      
+      lista <- paste0(diretorio_notas(), "/", arquivos)
+      v$data <- ler_notas(lista = lista)
     })
     
-    output$table <- renderTable({
-        v$data
+    output$dados_apagados <- renderText({
+      "Dados apagados!"
     })
-
-    output$download_dados <- downloadHandler(
-       filename = function() {
-         paste('data-', Sys.Date(), '.csv', sep='')
-       },
-       content = function(con) {
-         write.csv(v$data, con)
-       }
-     )
+    
+    output$table <- renderDataTable({
+      datatable(v$data,
+                options = list(scrollY='600px')
+                )
+    })
+    
+    output$notas_lidas <- renderText({
+      paste0(nrow(v$data), " negócios obtidos!")
+    })
+    
+    observeEvent(input$limpar_dados, {
+      dir_dados <- './dados/'
+      arquivo <- list.files(dir_dados)
+      dados <- read.csv(paste0(dir_dados, arquivo))
+      dados <- dados[0,] 
+      write.csv(dados, file = paste0(dir_dados, arquivo), row.names = F)
+      file.rename(from = paste0(dir_dados, arquivo), to = paste0(dir_dados, paste0('data-', Sys.Date(), '.csv')))
+    })
+    
+    observeEvent(input$download_dados, {
+      dir_dados <- './dados/'
+      arquivo <- list.files(dir_dados)
+      dados <- read.csv(paste0(dir_dados, arquivo))
+      dados <- rbind(dados, v$data)
+      write.csv(dados, file = paste0(dir_dados, arquivo), row.names = F)
+      file.rename(from = paste0(dir_dados, arquivo), to = paste0(dir_dados, paste0('data-', Sys.Date(), '.csv')))
+      
+      output$download_concluido <- renderText({
+        "Os dados foram incorporados ao banco de dados!"
+      })
+      
+    })
 }
 
 shinyApp(ui, server)
