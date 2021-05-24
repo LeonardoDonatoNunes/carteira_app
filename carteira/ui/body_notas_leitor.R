@@ -9,9 +9,9 @@ tabItem(tabName = "leitor_notas",
               
               column(width = 10,
                      HTML(paste0(
-                       "<p style = 'text-align: justify; color: #0c1b3e; font-size: 26px; '<a target='_blank'>Ler notas de corretagem</a> </p>",
-                       "<p style = 'text-align: justify; color: #0c1b3e; font-size: 20px; '<a target='_blank'>As funções abaixo servem para obeter os dados de negociações que estão nas notas de corretagem.</a> </p>",
-                       "<p style = 'text-align: justify; color: #0c1b3e; font-size: 20px; '<a target='_blank'>Para refazer todo o banco de dados, clicar no botão vermelho   'Apagar Dados' no botão a direita.</a> </p>"
+                       "<p style = 'text-align: justify; color: #0c1b3e; font-size: 160%; '<a target='_blank'>Ler notas de corretagem</a> </p>",
+                       "<p style = 'text-align: justify; color: #0c1b3e; font-size: 140%; '<a target='_blank'>As funções abaixo servem para obeter os dados de negociações que estão nas notas de corretagem.</a> </p>",
+                       "<p style = 'text-align: justify; color: #0c1b3e; font-size: 140%; '<a target='_blank'>Para refazer todo o banco de dados, clicar no botão vermelho   'Apagar Dados' no botão a direita.</a> </p>"
                      ))
               ),
               

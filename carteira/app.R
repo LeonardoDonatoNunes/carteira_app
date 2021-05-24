@@ -13,6 +13,7 @@ library(shinycssloaders)
 library(DT)
 
 source("./funcoes/ler_notas.R")
+source("./funcoes/resumir_notas.R")
 
 # UI ----
 
@@ -29,13 +30,32 @@ ui <- dashboardPage(
     dashboardBody(
         
         tags$head(
-            tags$link(rel = "stylesheet", type = "text/css", href = "styles.css")
+            tags$link(rel = "stylesheet", type = "text/css", href = "styles.css"),
+            
+            # Script JS para dimensionar de acordo com o tamanho da janela.
+            tags$script('
+                                var dimension = [0, 0];
+                                $(document).on("shiny:connected", function(e) {
+                                    dimension[0] = window.innerWidth;
+                                    dimension[1] = window.innerHeight;
+                                    Shiny.onInputChange("dimension", dimension);
+                                });
+                                $(window).resize(function(e) {
+                                    dimension[0] = window.innerWidth;
+                                    dimension[1] = window.innerHeight;
+                                    Shiny.onInputChange("dimension", dimension);
+                                });
+                            ')
         ),
         
         tabItems(
           
             # First tab content
             source("./ui/body_home.R", encoding = 'UTF-8')$value,
+            
+            # diciona o código da UI da página dos dados das notas.
+            source("./ui/body_notas_resumo.R", encoding = 'UTF-8')$value,
+            
             
             # diciona o código da UI da página dos dados das notas.
             source("./ui/body_notas_dados.R", encoding = 'UTF-8')$value,
@@ -74,11 +94,32 @@ server <- function(input, output, session) {
   # Carrega os dados armazenados
   
   dados_notas <- read.csv(paste0('./dados/', list.files('./dados/')))
+  dados_notas$data <- as.Date(dados_notas$data)
   
   output$tabela_dados <- renderDataTable({
     datatable(dados_notas,
     options = list(scrollY='600px'))
   })
+  
+  updateDateInput(session, inputId = 'resumo_selecionar_ano_inicio', 
+                  value = min(dados_notas$data))
+  
+  dados_notas_sub <- reactive({
+    
+    data_ini <- input$resumo_selecionar_ano_inicio
+    data_fim <- input$resumo_selecionar_ano_fim
+    
+    resumir_notas(data_ini = data_ini, data_fim = data_fim)
+    
+  })
+
+  
+  output$tabela_resumo <- renderDataTable({
+    datatable(dados_notas_sub(), 
+              options = list(searchHighlight = TRUE))
+  })
+  
+  
   
   v <- reactiveValues(data=NULL)
   

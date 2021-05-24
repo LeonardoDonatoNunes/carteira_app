@@ -1,21 +1,14 @@
 
 
-resumir_dados <- function(ano_base = Sys.Date()){
+resumir_notas <- function(data_ini = data_ini, data_fim = data_fim, encoding = "UTF-8"){
 
     require(stringr)
     require(dplyr)
     require(lubridate)
-    
-    if(is.Date(ano_base)){
-      ano_base <- year(ano_base)
-    }
   
     dados <- read.csv(paste0("./dados/", list.files('./dados/')))
-    
-    dados$data <- as.Date(dados$data)
-    dados$ano <- year(dados$data)
-    
-    dados <- subset(dados, ano <= ano_base)
+    dados <- subset(dados, data >= data_ini &
+                           data <= data_fim)
     
     dados$Titulo <- sub("F$", "", dados$Titulo)
     dados$Valor <- as.numeric(sub(",", ".", dados$Valor))
@@ -45,17 +38,17 @@ resumir_dados <- function(ano_base = Sys.Date()){
       Valor <- sum(titulo_i[titulo_i$C_V == 'C',]$Valor_Ajuste) - sum(titulo_i[titulo_i$C_V == 'V',]$Valor_Ajuste)
       Numero <- sum(titulo_i[titulo_i$C_V == 'C',]$N) - sum(titulo_i[titulo_i$C_V == 'V',]$N)
       
-      resumo_i <- data.frame("Título" = titulos[i],
+      resumo_i <- data.frame("Titulo" = titulos[i],
                              "Tipo" = titulo_i$Tipo,
                              "C_V" = paste(unique(titulo_i$C_V), collapse = ";"),
-                             "Primeiro negócio" = min(titulo_i$Data_ini),
-                             "Último negócio" = max(titulo_i$Data_fim), 
-                             "Preço total" = Valor,
-                             "Número de papeis" = Numero,
-                             "Preço médio" = Valor/Numero)
-      
+                             "Primeiro negocio" = min(titulo_i$Data_ini),
+                             "Ultimo negocio" = max(titulo_i$Data_fim), 
+                             "Preco total" = Valor,
+                             "Numero de papeis" = Numero,
+                             "Preco medio" = Valor/Numero)
+
       resumo <- rbind(resumo, resumo_i)
-      
+      resumo <- unique(resumo)
     }
 
 return(resumo)
